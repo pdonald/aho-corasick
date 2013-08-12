@@ -44,12 +44,12 @@ Use `IEnumerable<T>.Any()` to check if the text contains a match without retriev
 If you want to match whole words, you can use `Trie<string, T>`.
 
 ```csharp
-string[] text = "hello world".Split(' ');
+string[] text = "hello world i say to you".Split(' ');
             
 AhoCorasick.Trie<string, bool> trie = new AhoCorasick.Trie<string, bool>();
-trie.Add(new[] { "world" }, true);
+trie.Add("hello world".Split(' '), true);
 trie.Build();
-bool textContainsWorld = trie.Find(text).Any();
+bool containsHelloWorld = trie.Find(text).Any();
 ```
 
 License
