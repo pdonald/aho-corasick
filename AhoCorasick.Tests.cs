@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.Linq;
 
 using NUnit.Framework;
@@ -36,11 +37,11 @@ namespace AhoCorasick
             trie.Add("world");
             trie.Build();
 
-            string[] matches = trie.Find(text).ToArray();
+            var matches = trie.Find(text).ToArray();
 
             Assert.AreEqual(2, matches.Length);
-            Assert.AreEqual("hello", matches[0]);
-            Assert.AreEqual("world", matches[1]);
+            Assert.AreEqual(new Tuple<string, int>("hello", 4), (Tuple<string, int>)matches[0]);
+            Assert.AreEqual(new Tuple<string, int>("world", 40), (Tuple<string, int>)matches[1]);
         }
 
         [Test]
@@ -57,21 +58,40 @@ namespace AhoCorasick
         }
 
         [Test]
-        public void LineNumbers()
+        public void Ids()
         {
-            string text = "world, i hello you!";
-            string[] words = new[] { "hello", "world" };
+            string text = "hello and welcome to this beautiful world!";
 
             AhoCorasick.Trie<int> trie = new AhoCorasick.Trie<int>();
-            for (int i = 0; i < words.Length; i++)
-                trie.Add(words[i], i);
+            trie.Add("hello", 123);
+            trie.Add("world", 456);
+
             trie.Build();
 
-            int[] lines = trie.Find(text).ToArray();
+            var matches = trie.Find(text).ToArray();
 
-            Assert.AreEqual(2, lines.Length);
-            Assert.AreEqual(1, lines[0]);
-            Assert.AreEqual(0, lines[1]);
+            Assert.AreEqual(2, matches.Length);
+            Assert.AreEqual(new Tuple<int, int>(123, 4), matches[0]);
+            Assert.AreEqual(new Tuple<int, int>(456, 40), matches[1]);
+        }
+
+        [Test]
+        public void WordsAndIds()
+        {
+            string text = "hello and welcome to this beautiful world!";
+
+            AhoCorasick.Trie<Tuple<string, int>> trie = new AhoCorasick.Trie<Tuple<string, int>>();
+
+            trie.Add("hello", new Tuple<string, int>("hello", 123));
+            trie.Add("world", new Tuple<string, int>("world", 456));
+
+            trie.Build();
+
+            var matches = trie.Find(text).ToArray();
+
+            Assert.AreEqual(2, matches.Length);
+            Assert.AreEqual(new Tuple<Tuple<string, int>, int>(new Tuple<string, int>("hello", 123), 4), matches[0]);
+            Assert.AreEqual(new Tuple<Tuple<string, int>, int>(new Tuple<string, int>("world", 456), 40), matches[1]);
         }
 
         [Test]

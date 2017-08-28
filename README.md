@@ -15,13 +15,15 @@ trie.Build();
 
 string text = "hello and welcome to this beautiful world!";
 
-// find words
-foreach (string word in trie.Find(text)) {
-  Console.WriteLine(word);
+// find words and wordEndIndices
+foreach (Tuple<string, int> tuple in trie.Find(text)) {
+  var word = tuple.Item1;
+  var wordEndIndex = tuple.Item2;
+  Console.WriteLine("{0}, {1}", word, wordEndIndex);
 }
 ```
 
-You can associate other data with the words (like an ID or line number).
+You could associate other data with the words (like an ID or line number).
 
 ```csharp
 AhoCorasick.Trie<int> trie = new AhoCorasick.Trie<int>();
@@ -33,9 +35,34 @@ trie.Add("world", 456);
 // build search tree
 trie.Build();
 
-// retrieve IDs
-foreach (int id in trie.Find(text)) {
-  Console.WriteLine(id);
+// retrieve IDs and wordEndIndices
+foreach (Tuple<int, int> tuple in trie.Find(text))
+{
+  var id = tuple.Item1;
+  var wordEndIndex = tuple.Item2;
+  Console.WriteLine("{0}, {1}", id, wordEndIndex);
+}
+```
+
+You also could retrieve matched strings and associated data (like an ID or line number)
+
+```csharp
+AhoCorasick.Trie<Tuple<string, int>> trie = new AhoCorasick.Trie<int>();
+
+// add words
+trie.Add("hello", new Tuple<string, int>("hello", 123));
+trie.Add("world", new Tuple<string, int>("world", 456));
+
+// build search tree
+trie.Build();
+
+// find words, IDs and wordEndIndices
+foreach (Tuple<Tuple<string, int>, int> tuple in trie.Find(text))
+{
+  var word = tuple.Item1.Item1;
+  var id = tuple.Item1.Item2;
+  var wordEndIndex = tuple.Item2;
+  Console.WriteLine("{0}, {1}, {2}", word, id, wordEndIndex);
 }
 ```
 
