@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2013 Pēteris Ņikiforovs
+// Copyright (c) 2013 Pēteris Ņikiforovs
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ namespace AhoCorasick
         {
             string text = "hello and welcome to this beautiful world!";
 
-            AhoCorasick.Trie trie = new AhoCorasick.Trie();
+            var trie = new AhoCorasick.Trie();
             trie.Add("hello");
             trie.Add("world");
             trie.Build();
@@ -40,8 +40,8 @@ namespace AhoCorasick
             var matches = trie.Find(text).ToArray();
 
             Assert.AreEqual(2, matches.Length);
-            Assert.AreEqual(new Tuple<string, int>("hello", 4), (Tuple<string, int>)matches[0]);
-            Assert.AreEqual(new Tuple<string, int>("world", 40), (Tuple<string, int>)matches[1]);
+            Assert.AreEqual(Tuple.Create("hello", 4), matches[0]);
+            Assert.AreEqual(Tuple.Create("world", 40), matches[1]);
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace AhoCorasick
         {
             string text = "hello and welcome to this beautiful world!";
 
-            AhoCorasick.Trie trie = new AhoCorasick.Trie();
+            var trie = new AhoCorasick.Trie();
             trie.Add("hello");
             trie.Add("world");
             trie.Build();
@@ -62,7 +62,7 @@ namespace AhoCorasick
         {
             string text = "hello and welcome to this beautiful world!";
 
-            AhoCorasick.Trie<int> trie = new AhoCorasick.Trie<int>();
+            var trie = new AhoCorasick.Trie<int>();
             trie.Add("hello", 123);
             trie.Add("world", 456);
 
@@ -71,8 +71,8 @@ namespace AhoCorasick
             var matches = trie.Find(text).ToArray();
 
             Assert.AreEqual(2, matches.Length);
-            Assert.AreEqual(new Tuple<int, int>(123, 4), matches[0]);
-            Assert.AreEqual(new Tuple<int, int>(456, 40), matches[1]);
+            Assert.AreEqual(Tuple.Create(123, 4), matches[0]);
+            Assert.AreEqual(Tuple.Create(456, 40), matches[1]);
         }
 
         [Test]
@@ -80,26 +80,26 @@ namespace AhoCorasick
         {
             string text = "hello and welcome to this beautiful world!";
 
-            AhoCorasick.Trie<Tuple<string, int>> trie = new AhoCorasick.Trie<Tuple<string, int>>();
+            var trie = new AhoCorasick.Trie<Tuple<string, int>>();
 
-            trie.Add("hello", new Tuple<string, int>("hello", 123));
-            trie.Add("world", new Tuple<string, int>("world", 456));
+            trie.Add("hello", Tuple.Create("hello", 123));
+            trie.Add("world", Tuple.Create("world", 456));
 
             trie.Build();
 
             var matches = trie.Find(text).ToArray();
 
             Assert.AreEqual(2, matches.Length);
-            Assert.AreEqual(new Tuple<Tuple<string, int>, int>(new Tuple<string, int>("hello", 123), 4), matches[0]);
-            Assert.AreEqual(new Tuple<Tuple<string, int>, int>(new Tuple<string, int>("world", 456), 40), matches[1]);
+            Assert.AreEqual(Tuple.Create(Tuple.Create("hello", 123), 4), matches[0]);
+            Assert.AreEqual(Tuple.Create(Tuple.Create("world", 456), 40), matches[1]);
         }
 
         [Test]
         public void Words()
         {
             string[] text = "one two three four".Split(' ');
-            
-            AhoCorasick.Trie<string, bool> trie = new AhoCorasick.Trie<string, bool>();
+
+            var trie = new AhoCorasick.Trie<string, bool>();
             trie.Add(new[] { "three", "four" }, true);
             trie.Build();
 
