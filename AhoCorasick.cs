@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -71,10 +72,12 @@ namespace AhoCorasick
     /// <typeparam name="TValue">The type of the value that will be returned when the word is found.</typeparam>
     public class Trie<T, TValue>
     {
+        public int Count { get; private set; } = 0;
+
         /// <summary>
         /// Root of the trie. It has no value and no parent.
         /// </summary>
-        private readonly Node<T, TValue> root = new Node<T, TValue>();
+        private readonly Node<T, TValue> _root = new Node<T, TValue>();
 
         /// <summary>
         /// Adds a word to the tree.
@@ -90,16 +93,13 @@ namespace AhoCorasick
         public void Add(IEnumerable<T> word, TValue value)
         {
             // start at the root
-            var node = root;
+            var node = _root;
 
             // build a branch for the word, one letter at a time
             // if a letter node doesn't exist, add it
             foreach (T c in word)
             {
-                var child = node[c];
-
-                if (child == null)
-                    child = node[c] = new Node<T, TValue>(c, node);
+                var child = node[c] ?? (node[c] = new Node<T, TValue>(c, node));
 
                 node = child;
             }
@@ -107,8 +107,9 @@ namespace AhoCorasick
             // mark the end of the branch
             // by adding a value that will be returned when this word is found in a text
             node.Values.Add(value);
-        }
 
+            ++Count;
+        }
 
         /// <summary>
         /// Constructs fail or fall links.
@@ -117,7 +118,7 @@ namespace AhoCorasick
         {
             // construction is done using breadth-first-search
             var queue = new Queue<Node<T, TValue>>();
-            queue.Enqueue(root);
+            queue.Enqueue(_root);
 
             while (queue.Count > 0)
             {
@@ -128,20 +129,20 @@ namespace AhoCorasick
                     queue.Enqueue(child);
 
                 // fail link of root is root
-                if (node == root)
+                if (node == _root)
                 {
-                    root.Fail = root;
+                    _root.Fail = _root;
                     continue;
                 }
 
                 var fail = node.Parent.Fail;
 
-                while (fail[node.Word] == null && fail != root)
+                while (fail[node.Word] == null && fail != _root)
                     fail = fail.Fail;
 
-                node.Fail = fail[node.Word] ?? root;
-                if (node.Fail == node) 
-                    node.Fail = root;
+                node.Fail = fail[node.Word] ?? _root;
+                if (node.Fail == node)
+                    node.Fail = _root;
             }
         }
 
@@ -149,23 +150,26 @@ namespace AhoCorasick
         /// Finds all added words in a text.
         /// </summary>
         /// <param name="text">The text to search in.</param>
-        /// <returns>The values that were added for the found words.</returns>
-        public IEnumerable<TValue> Find(IEnumerable<T> text)
+        /// <returns>The values, endIndexs that were added for the found words.</returns>
+        public IEnumerable<Tuple<TValue, int>> Find(IEnumerable<T> text)
         {
-            var node = root;
+            var node = _root;
 
+            int endIndex = 0;
             foreach (T c in text)
             {
-                while (node[c] == null && node != root)
+                while (node[c] == null && node != _root)
                     node = node.Fail;
 
-                node = node[c] ?? root;
+                node = node[c] ?? _root;
 
-                for (var t = node; t != root; t = t.Fail)
+                for (var t = node; t != _root; t = t.Fail)
                 {
                     foreach (TValue value in t.Values)
-                        yield return value;
+                        yield return new Tuple<TValue, int>(value, endIndex);
                 }
+
+                ++endIndex;
             }
         }
 
@@ -176,10 +180,8 @@ namespace AhoCorasick
         /// <typeparam name="TNodeValue">The same as the parent value type.</typeparam>
         private class Node<TNode, TNodeValue> : IEnumerable<Node<TNode, TNodeValue>>
         {
-            private readonly TNode word;
-            private readonly Node<TNode, TNodeValue> parent;
-            private readonly Dictionary<TNode, Node<TNode, TNodeValue>> children = new Dictionary<TNode, Node<TNode, TNodeValue>>();
-            private readonly List<TNodeValue> values = new List<TNodeValue>();
+            private readonly Dictionary<TNode, Node<TNode, TNodeValue>> _children =
+                new Dictionary<TNode, Node<TNode, TNodeValue>>();
 
             /// <summary>
             /// Constructor for the root node.
@@ -195,34 +197,24 @@ namespace AhoCorasick
             /// <param name="parent"></param>
             public Node(TNode word, Node<TNode, TNodeValue> parent)
             {
-                this.word = word;
-                this.parent = parent;
+                this.Word = word;
+                this.Parent = parent;
             }
 
             /// <summary>
             /// Word (or letter) for this node.
             /// </summary>
-            public TNode Word
-            {
-                get { return word; }
-            }
+            public TNode Word { get; }
 
             /// <summary>
             /// Parent node.
             /// </summary>
-            public Node<TNode, TNodeValue> Parent
-            {
-                get { return parent; }
-            }
+            public Node<TNode, TNodeValue> Parent { get; }
 
             /// <summary>
             /// Fail or fall node.
             /// </summary>
-            public Node<TNode, TNodeValue> Fail
-            {
-                get;
-                set;
-            }
+            public Node<TNode, TNodeValue> Fail { get; set; }
 
             /// <summary>
             /// Children for this node.
@@ -231,22 +223,19 @@ namespace AhoCorasick
             /// <returns>Child node.</returns>
             public Node<TNode, TNodeValue> this[TNode c]
             {
-                get { return children.ContainsKey(c) ? children[c] : null; }
-                set { children[c] = value; }
+                get { return _children.ContainsKey(c) ? _children[c] : null; }
+                set { _children[c] = value; }
             }
 
             /// <summary>
             /// Values for words that end at this node.
             /// </summary>
-            public List<TNodeValue> Values
-            {
-                get { return values; }
-            }
+            public List<TNodeValue> Values { get; } = new List<TNodeValue>();
 
             /// <inherit/>
             public IEnumerator<Node<TNode, TNodeValue>> GetEnumerator()
             {
-                return children.Values.GetEnumerator();
+                return _children.Values.GetEnumerator();
             }
 
             /// <inherit/>
